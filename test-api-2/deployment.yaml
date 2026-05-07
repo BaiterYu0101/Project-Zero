@@ -1,0 +1,23 @@
+## Here to start to write my first deployment file in my Zero_Project
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-api-2-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: test-api-2
+  template: 
+      metadata: 
+        labels:
+	  app: test-api-2
+      spec: 
+	    containers:
+	      - name: main-container
+	      image: ghcr.io/BaiterYu0101/test-api-2: latest
+	      ports:
+	      - containerPort: 8000
+          
+
