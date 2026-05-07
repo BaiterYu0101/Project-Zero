@@ -50,8 +50,8 @@ docker-compose.override.yml
 .env.*.local
 
 # Generated files (uncomment if you don't want to commit generated YAMLs)
-# */deployment.yaml
-# */service.yaml
+*/deployment.yaml
+*/service.yaml
 
 # Logs
 *.log
