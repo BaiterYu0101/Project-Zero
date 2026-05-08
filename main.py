@@ -44,12 +44,28 @@ def create(
         "ClusterIP",
         prompt="What type of service do you want? (ClusterIP, NodePort, LoadBalancer)",
     ),
+    size: str = typer.Option(None),  # No default or prompt here, allow the user to reprompt again if type wrongly
     push: bool = typer.Option(
         False,
         "--push",
         help="If set, ask whether to commit and push generated files to git.",
     ),
 ):
+    resources = {
+        "Small": {"cpu": "250m", "memory": "256Mi"},
+        "Medium": {"cpu": "500m", "memory": "512Mi"},
+        "Large": {"cpu": "1000m", "memory": "1Gi"}
+    }
+
+    #Loop this again to have a better prompt
+    while size not in resources:
+        #Means if User provided but invalid prompt, it will comes to this if....
+        if size is not None:
+            print(f"[bold red]Invalid size '{size}'. Please choose Small, Medium or Large. [/bold red]")
+        size = typer.prompt("App size? (Small/Medium/Large)", default="Small")
+        #Means if User provide the size 
+        if size not in resources:
+            continue
     clean_name = name.lower().replace(" ", "-").replace("_", "-")
 
     print(f"[bold blue]   Scaffolding project:[/bold blue] [green]{name}[/green]")
@@ -69,6 +85,7 @@ def create(
             app_port=port,
             replica_count=replicas,
             service_type=service_type,
+            limits=resources[size],
         )
         with open(project_path / f_name, "w") as f:
             f.write(output)

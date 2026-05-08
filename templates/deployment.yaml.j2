@@ -16,9 +16,16 @@ spec:
       spec: 
 	    containers:
 	      - name: main-container
-	      image: ghcr.io/BaiterYu0101/{{ app_name }}: latest
-	      ports:
-	      - containerPort: {{ app_port }}
+	        image: ghcr.io/BaiterYu0101/{{ app_name }}: latest
+	        ports:
+	        - containerPort: {{ app_port }}
+	        resources: 
+	          requests: 
+	            cpu: {{ limits.cpu }}
+	            memory: {{ limits.memory }}
+	          limits:
+	            cpu: {{ limits.cpu }}
+	            memory: {{ limits.memory }}
           
 
 
