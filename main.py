@@ -76,6 +76,8 @@ def create(
     templates = {
         "deployment.yaml.j2": "deployment.yaml",
         "services.yaml.j2": "service.yaml",
+        "Dockerfile.j2": "Dockerfile",
+        "README.md": "README.md"
     }
 
     for t_name, f_name in templates.items():
@@ -122,6 +124,24 @@ def create(
         else:
             print("[yellow]Push skipped. Commit is ready locally.[/yellow]")
 
+@app.command()
+def doctor():
+    "Verify that Jerry's M5 MacBook is ready for DevOps work."
+    tools = ["git", "docker", "kubectl", "python3"]
+    print(f"[bold blue] Running System Diagnostics...[/bold blue]")
+
+    for tool in tools:
+        try:
+            # 'which' finds where a program is installed
+            result = subprocess.run(["which", tool], capture_output=True, text=True)
+            if result.returncode == 0:
+                print(f"  [green]✅ {tool}[/green] is installed at: [dim]{result.stdout.strip()}[/dim]")
+            else:
+                print(f"  [red]❌ {tool}[/red] is NOT found!")
+        except Exception:
+            print(f"  [red]❌ Error checking for {tool}[/red]")
+
+    print("\n[bold green]System Check Complete![/bold green]")
 
 if __name__ == "__main__":
     app()

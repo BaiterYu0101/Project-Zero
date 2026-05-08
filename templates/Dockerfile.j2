@@ -1,0 +1,8 @@
+#Start from a lightweight Python image
+FROM python:3.9-slim
+#Set the working directory inside the container
+WORKDIR /app
+#COPY the generated files
+COPY . .
+EXPOSE {{ app_port }}
+CMD ["python3", "-m", "http.server", "{{ app_port }}"]
