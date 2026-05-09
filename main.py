@@ -143,5 +143,38 @@ def doctor():
 
     print("\n[bold green]System Check Complete![/bold green]")
 
+@app.command()
+def build (project_name: str):
+
+    #Standardize the naming of the project 
+    clean_name = project_name.lower().replace("", "-").replace("_", "-")
+    project_path = Path(clean_name)
+
+    #Check is the project folder exist??
+    if not project_path.exists():
+        print(f"[bold red]Error:[/bold red] Folder [yellow]'{clean_name}'[/yellow] has not been found!")
+        raise typer.Exit(code=1) #Code=1, means "exit with an error status"
+    
+    #Check is there a docker file??
+    if not(project_path / "Dockerfile").exist():
+        print(f"[bold red]Error:[/bold red]No Docker file in [yellow]'{clean_name}'")
+        print("RUn the 'create' command first!")
+        raise typer.Exit(code=1) #Code=1, prompt to out the loop with an error status
+    print(f"[bold blue] Building the Docker image: [/bold blue][green]:latest[/green]")
+
+    try: 
+        subprocess.run(
+            ["docker", "build", "-t", f"{clean_name}:latest", "."], #Means use the list of word here...if not, the python will think that they are having the same multiple proejct if having the name of my app, actually is my-app...
+            cwd=project_path,
+            check=True
+        )
+        print(f"\n[bold green]Success![/bold green] Image[yellow]{clean_name}:latest[/yellow] is ready.")
+        print(f"[dim]Run 'docker image'to see it on your Mac.[/dim]" )
+
+    except subprocess.calledProcessError:
+        print(f"\n[bold red]Build Failed...[/bold red] Ensure your Docker is running.")
+    except Exception as e:
+        print(f"[bold red]Unexpected Error[/bold red]")
+
 if __name__ == "__main__":
     app()
