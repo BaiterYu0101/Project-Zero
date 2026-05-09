@@ -147,7 +147,7 @@ def doctor():
 def build (project_name: str):
 
     #Standardize the naming of the project 
-    clean_name = project_name.lower().replace("", "-").replace("_", "-")
+    clean_name = project_name.lower().replace(" ", "-").replace("_", "-")
     project_path = Path(clean_name)
 
     #Check is the project folder exist??
@@ -171,10 +171,53 @@ def build (project_name: str):
         print(f"\n[bold green]Success![/bold green] Image[yellow]{clean_name}:latest[/yellow] is ready.")
         print(f"[dim]Run 'docker image'to see it on your Mac.[/dim]" )
 
-    except subprocess.calledProcessError:
+    except subprocess.CalledProcessError:
         print(f"\n[bold red]Build Failed...[/bold red] Ensure your Docker is running.")
     except Exception as e:
         print(f"[bold red]Unexpected Error[/bold red]")
 
+@app.command()
+def run(project_name: str, port: int = 8000):
+   """
+   Starts your Docker container so you can see it in your browser.
+   Usage: python3 main.py run {project_name}
+   """
+   clean_name = project_name.lower().replace(" ","-").replace("_","-")
+
+   print(f"[bold blue] Starting container:[/bold blue] [green] {project_name} [/green]")
+   print(f"[dim]Access it at: http://localhost:{port}[/dim]")
+#Remove any old container with the same name so there's no conflict
+   try:
+       subprocess.run(["docker", "rm", "-f", clean_name], capture_output=True)
+
+#Step 2: Run the new container
+#-d: Run in the background (detached)
+#-p: Map the ports (Mac_Port: Container_Port)
+#-name: Give it a clean name
+       subprocess.run(
+        [
+            "docker", "run", "-d",
+            "-p", f"{port}:{port}",
+            "--name", clean_name,
+            f"(clean_name):latest"
+        ],
+        check=True
+    )
+       print(f"[bold_green]Container is currently running!!![/bold green]")
+   except subprocess.CalledProcessError:
+       print(f"[bold red] Failed to start the container.[/bold red] DId you run 'build first?")
+
+@app.command()
+def logs(project_name: str):
+    """Streams logs from your running container. Press Ctrl+C to stop."""
+    clean_name = project_name.lower().replace(" ", "-").replace("_", "-")
+    print(f"[bold blue] Streaming logs for:[/bold blue] [green]{clean_name}[/green]\n")
+
+    try:
+        subprocess.run("docker", "logs", "-f", clean_name, check=True)
+    except KeyboardInterrupt:
+        print("\n[yellow]Stopped following logs.[/yellow]")
+    except subprocess.CalledProcessError:
+        print(f"[bold red]No logs found for {clean_name}.[/bold red]Is it running?")
 if __name__ == "__main__":
     app()
