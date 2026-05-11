@@ -156,7 +156,7 @@ def build (project_name: str):
         raise typer.Exit(code=1) #Code=1, means "exit with an error status"
     
     #Check is there a docker file??
-    if not(project_path / "Dockerfile").exist():
+    if not(project_path / "Dockerfile").exists():
         print(f"[bold red]Error:[/bold red]No Docker file in [yellow]'{clean_name}'")
         print("RUn the 'create' command first!")
         raise typer.Exit(code=1) #Code=1, prompt to out the loop with an error status
@@ -214,10 +214,74 @@ def logs(project_name: str):
     print(f"[bold blue] Streaming logs for:[/bold blue] [green]{clean_name}[/green]\n")
 
     try:
-        subprocess.run("docker", "logs", "-f", clean_name, check=True)
+        subprocess.run(["docker", "logs", "-f", clean_name], check=True)
     except KeyboardInterrupt:
         print("\n[yellow]Stopped following logs.[/yellow]")
     except subprocess.CalledProcessError:
         print(f"[bold red]No logs found for {clean_name}.[/bold red]Is it running?")
+
+@app.command()
+def deploy(project_name: str):
+    """
+    Deploys your project to the local Kubernetes cluster.
+    """
+    clean_name = project_name.lower().replace(" ", "-").replace("_", "-")
+    project_path = Path(clean_name)
+
+    # 1. CHECK IF THE PROJECT FOLDER EXISTS
+    if not project_path.exists():
+        print(f"[bold red]Error:[/bold red] Project folder[yellow]'{clean_name}'[/yellow] not found.")
+        raise typer.Exit(1)
+    print(f"[bold blue] Deploying to Kubernetes:[/bold blue][green]{clean_name}[/green]")
+
+    try:
+        # 2. The 'apply' command:
+        # '-f .' means "find all YAML files in this folder and apply them"
+        subprocess.run(
+            ["kubectl", "apply", "-f", "." ],
+            cwd=project_path,
+            check=True
+        )
+        print(f"\n[bold green]Deployment succesful![/bold green]")
+        print(f"[dim]Check your OrbStack dashboard under 'Pods' to see it turn green![/dim]")
+    except subprocess.CalledProcessError:
+        print(f"\n[bold red]Deployment failed.[./bold red]Is Kubernetes enabled in Orbstack?")
+    except Exception as e:
+        print(f"[bold red]Unexpected Error[/bold red] {e}")
+
+
+#For clearup
+@app.command()
+def delete(project_name: str):
+    "Cleans up both Kubernetes and Docker resources for a project. "
+    clean_name = project_name.lower().replace(" ", "-").replace("_","-")
+    project_path = Path(clean_name)
+
+    print(f"[bold red] Deleting resources for:[/bold red] [yellow]{clean_name}[/yellow]")
+    
+    #1. Clean up Kubernetes
+    if project_path.exists():
+        subprocess.run(["kubectl", "delete", "-f", "."], cwd=project_path)
+    
+    #2. Clean up Docker
+    subprocess.run(["docker","rm", "-f", clean_name], capture_output=True)
+
+    print(f"[bold green]System is clean![/bold green]")
+
+#For AutoScale
+@app.command()
+def scale(project_name: str, replicas: int):
+    "Changes the number of running pods instantly"
+    clean_name = project_name.lower().replace(" ", "-").replace("_","-")
+    print(f"[bold blue]Scaling{clean_name} to {replicas} replicas...[/bold blue]")
+
+    try:
+        subprocess.run([
+            "kubectl", "scale", f"deployment/{clean_name}",
+            f"--replicas={replicas}"
+        ], check=True)
+        print(f"[bold green]Scaling complete!![/bold green]")
+    except subprocess.CalledProcessError:
+        print(f"[bold red]Failed to scale. Is this project deployed?[/bold red]")
 if __name__ == "__main__":
     app()
