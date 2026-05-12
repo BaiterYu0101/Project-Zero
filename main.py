@@ -199,11 +199,11 @@ def run(project_name: str, port: int = 8000):
             "docker", "run", "-d",
             "-p", f"{port}:{port}",
             "--name", clean_name,
-            f"(clean_name):latest"
+            f"{clean_name}:latest"
         ],
         check=True
     )
-       print(f"[bold_green]Container is currently running!!![/bold green]")
+       print(f"[bold green]Container is currently running!!![/bold green]")
    except subprocess.CalledProcessError:
        print(f"[bold red] Failed to start the container.[/bold red] DId you run 'build first?")
 
@@ -245,7 +245,7 @@ def deploy(project_name: str):
         print(f"\n[bold green]Deployment succesful![/bold green]")
         print(f"[dim]Check your OrbStack dashboard under 'Pods' to see it turn green![/dim]")
     except subprocess.CalledProcessError:
-        print(f"\n[bold red]Deployment failed.[./bold red]Is Kubernetes enabled in Orbstack?")
+        print(f"\n[bold red]Deployment failed.[/bold red]Is Kubernetes enabled in Orbstack?")
     except Exception as e:
         print(f"[bold red]Unexpected Error[/bold red] {e}")
 
