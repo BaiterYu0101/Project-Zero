@@ -9,8 +9,8 @@ from pathlib import Path
 from rich import print
 
 app = typer.Typer() 
-env = Environment(loader=FileSystemLoader("templates"))
-
+BASE_DIR = Path(__file__) .resolve().parent
+env = Environment(loader=FileSystemLoader(BASE_DIR / "templates"))
 
 def run_git_command(args: list[str], cwd: Path) -> bool:
     try:
@@ -211,15 +211,21 @@ def run(project_name: str, port: int = 8000):
 def logs(project_name: str):
     """Streams logs from your running container. Press Ctrl+C to stop."""
     clean_name = project_name.lower().replace(" ", "-").replace("_", "-")
-    print(f"[bold blue] Streaming logs for:[/bold blue] [green]{clean_name}[/green]\n")
+    print(f"[bold green] Connected to Control Room:[/bold green]{clean_name}")
 
     try:
-        subprocess.run(["docker", "logs", "-f", clean_name], check=True)
-    except KeyboardInterrupt:
-        print("\n[yellow]Stopped following logs.[/yellow]")
+        subprocess.run([
+            "kubectl", "logs",
+            "-l", f"app={clean_name}",
+            "--all-containers",
+            "--follow",
+            "--tail=20"
+        ], check=True)
     except subprocess.CalledProcessError:
-        print(f"[bold red]No logs found for {clean_name}.[/bold red]Is it running?")
-
+        print(f"[bold red] No pods found for {clean_name}.[/bold red] Is the project deployed?")
+    except KeyboardInterrupt:
+        print("\n[yellow]Log stream disconnected.[/yellow]")
+    
 @app.command()
 def deploy(project_name: str):
     """
@@ -273,8 +279,14 @@ def delete(project_name: str):
 def scale(project_name: str, replicas: int):
     "Changes the number of running pods instantly"
     clean_name = project_name.lower().replace(" ", "-").replace("_","-")
+    if not clean_name.endswith("-deployment"):
+        deployment_name = f"{clean_name}-deployment"
+    else:
+        clean_name = deployment_name
+    # Print the status of running now
     print(f"[bold blue]Scaling{clean_name} to {replicas} replicas...[/bold blue]")
 
+    #Error Handling
     try:
         subprocess.run([
             "kubectl", "scale", f"deployment/{clean_name}",
